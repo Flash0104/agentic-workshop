@@ -24,7 +24,14 @@ export async function POST(req: NextRequest) {
       const uint8Array = new Uint8Array(arrayBuffer);
       
       const result = await extractText(uint8Array);
-      const text = result?.text || String(result) || "";
+      let text = "";
+      
+      // Handle different result types from unpdf
+      if (result?.text) {
+        text = Array.isArray(result.text) ? result.text.join('\n\n') : String(result.text);
+      } else if (result) {
+        text = String(result);
+      }
       
       if (!text || text.trim().length === 0) {
         return NextResponse.json(
