@@ -168,7 +168,7 @@ ${data.turns.map((t) => `**${t.role.toUpperCase()}**: ${t.content}`).join("\n\n"
     if (!data?.evaluation) return;
 
     try {
-      const jsPDF = (await import('jspdf')).jsPDF;
+      const { default: jsPDF } = await import('jspdf');
 
       toast({
         title: "Generating PDF...",
