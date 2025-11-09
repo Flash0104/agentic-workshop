@@ -1,25 +1,9 @@
 import OpenAI from "openai";
 
-// Lazy initialization to avoid build-time evaluation
-// The error will be thrown at runtime when the function is actually called
-let _openai: OpenAI | null = null;
-
-function getOpenAIInstance() {
-  if (!_openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("Missing OPENAI_API_KEY environment variable");
-    }
-    _openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-  return _openai;
-}
-
-export const openai = new Proxy({} as OpenAI, {
-  get(target, prop) {
-    return (getOpenAIInstance() as any)[prop];
-  },
+// Use fallback empty string during build time to prevent errors
+// The actual value will be injected at runtime by Vercel
+export const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
 });
 
 export const DEFAULT_MODEL =

@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// Lazy initialization to avoid build-time evaluation
-function getOpenAI() {
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const openai = getOpenAI();
     const {
       sessionId,
       message,

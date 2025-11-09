@@ -99,30 +99,12 @@ export type Database = {
   };
 };
 
-// Lazy initialization to avoid build-time evaluation
-let _supabase: SupabaseClient<Database> | null = null;
+// Use fallback empty strings during build time to prevent errors
+// The actual values will be injected at runtime by Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-function getSupabaseInstance(): SupabaseClient<Database> {
-  if (!_supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error("Missing Supabase environment variables");
-    }
-
-    _supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-  }
-  return _supabase;
-}
-
-// Export the lazy getter
-export const supabase: SupabaseClient<Database> = new Proxy({} as SupabaseClient<Database>, {
-  get(target, prop) {
-    const instance = getSupabaseInstance();
-    const value = (instance as any)[prop];
-    return typeof value === 'function' ? value.bind(instance) : value;
-  },
-});
+// Create the client (will only work at runtime with proper env vars)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 
