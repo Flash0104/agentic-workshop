@@ -58,7 +58,7 @@ export const CreateSessionSchema = z.object({
   mode: z.enum(["easy", "normal", "hard"]),
   scenario: z.enum(["interview", "sales"]).default("interview"),
   jobUrl: z.string().url().optional(),
-  jobJson: z.record(z.unknown()).optional(),
+  jobJson: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateSession = z.infer<typeof CreateSessionSchema>;
