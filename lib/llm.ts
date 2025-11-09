@@ -1,11 +1,25 @@
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("Missing OPENAI_API_KEY environment variable");
+// Lazy initialization to avoid build-time evaluation
+// The error will be thrown at runtime when the function is actually called
+let _openai: OpenAI | null = null;
+
+function getOpenAIInstance() {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY environment variable");
+    }
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return _openai;
 }
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+export const openai = new Proxy({} as OpenAI, {
+  get(target, prop) {
+    return (getOpenAIInstance() as any)[prop];
+  },
 });
 
 export const DEFAULT_MODEL =
