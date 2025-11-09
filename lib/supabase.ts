@@ -1,28 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-// Lazy initialization to avoid build-time evaluation
-let _supabase: ReturnType<typeof createClient> | null = null;
-
-function getSupabaseInstance() {
-  if (!_supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error("Missing Supabase environment variables");
-    }
-
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
-  return _supabase;
-}
-
-// Export a proxy that lazily initializes the client
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(target, prop) {
-    return (getSupabaseInstance() as any)[prop];
-  },
-});
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export type Database = {
   public: {
@@ -123,8 +99,30 @@ export type Database = {
   };
 };
 
+// Lazy initialization to avoid build-time evaluation
+let _supabase: SupabaseClient<Database> | null = null;
 
+function getSupabaseInstance(): SupabaseClient<Database> {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing Supabase environment variables");
+    }
 
+    _supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabase;
+}
+
+// Export the lazy getter
+export const supabase: SupabaseClient<Database> = new Proxy({} as SupabaseClient<Database>, {
+  get(target, prop) {
+    const instance = getSupabaseInstance();
+    const value = (instance as any)[prop];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
 
 
