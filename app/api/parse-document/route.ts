@@ -23,25 +23,31 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       
-      const result = await extractText(uint8Array);
+      const result = await extractText(uint8Array) as any;
       let text: string = "";
       
       // Handle different result types from unpdf
       if (result?.text) {
-        const resultText = result.text;
-        text = Array.isArray(resultText) ? resultText.join('\n\n') : String(resultText);
+        // unpdf returns text as string or string[] depending on version/format
+        text = Array.isArray(result.text) 
+          ? result.text.join('\n\n') 
+          : typeof result.text === 'string' 
+            ? result.text 
+            : String(result.text);
       } else if (result) {
         text = String(result);
       }
       
-      if (!text || text.trim().length === 0) {
+      const trimmedText = typeof text === 'string' ? text.trim() : '';
+      
+      if (!trimmedText || trimmedText.length === 0) {
         return NextResponse.json(
           { error: "Could not extract text from PDF. The file might be scanned/image-based. Please copy and paste the text instead." },
           { status: 400 }
         );
       }
       
-      return NextResponse.json({ text: text.trim() });
+      return NextResponse.json({ text: trimmedText });
     } 
     else {
       return NextResponse.json(
