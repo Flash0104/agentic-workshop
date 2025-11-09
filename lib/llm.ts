@@ -56,8 +56,9 @@ export async function transcribeAudio(
   const filename = `audio.${extension}`;
 
   // Convert buffer to File-like object for OpenAI
-  // First create a Blob from the buffer, then convert to File
-  const blob = new Blob([audioBuffer.buffer], { type: mimeType });
+  // Create a new Uint8Array from the buffer to ensure proper type compatibility
+  const uint8Array = new Uint8Array(audioBuffer);
+  const blob = new Blob([uint8Array], { type: mimeType });
   const file = new File([blob], filename, { type: mimeType });
 
   const transcription = await openai.audio.transcriptions.create({
