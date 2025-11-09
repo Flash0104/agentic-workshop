@@ -105,6 +105,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Create the client (will only work at runtime with proper env vars)
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Type assertion ensures proper type inference even with fallback values
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey) as SupabaseClient<Database>;
 
 
