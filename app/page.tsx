@@ -185,10 +185,6 @@ export default function Home() {
     }
   };
 
-  const handleStartInterview = () => {
-    setFlowStep("interview");
-  };
-
   const handleInterviewComplete = async () => {
     setFlowStep("complete");
     
