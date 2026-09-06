@@ -66,7 +66,10 @@ export function getNvidiaNemotronClient(): { client: OpenAI; model: string } {
  */
 export function getOpenAIVoiceClient(): { client: OpenAI; realtimeModel: string; ttsModel: string } {
   const apiKey = process.env.OPENAI_API_KEY || "";
-  const realtimeModel = process.env.REALTIME_MODEL || "gpt-realtime";
+  const rawModel = (process.env.REALTIME_MODEL || process.env.NEXT_PUBLIC_REALTIME_MODEL || "").trim();
+  const isValidRealtimeModel =
+    rawModel.length >= 8 && (rawModel.startsWith("gpt-") || rawModel.includes("realtime"));
+  const realtimeModel = isValidRealtimeModel ? rawModel : "gpt-realtime";
   const ttsModel = process.env.TTS_MODEL || "tts-1";
 
   const client = new OpenAI({

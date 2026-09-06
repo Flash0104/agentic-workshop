@@ -195,8 +195,12 @@ export function useWebRTCRealtime({
 
       // Fallback to legacy preview endpoint if calls returns 404
       if (sdpResponse.status === 404) {
+        const safeModel =
+          model && model.length >= 8 && (model.startsWith("gpt-") || model.includes("realtime"))
+            ? model
+            : "gpt-realtime";
         const baseUrl = "https://api.openai.com/v1/realtime";
-        sdpResponse = await fetch(`${baseUrl}?model=${model || "gpt-realtime"}`, {
+        sdpResponse = await fetch(`${baseUrl}?model=${safeModel}`, {
           method: "POST",
           body: offer.sdp,
           headers: {
