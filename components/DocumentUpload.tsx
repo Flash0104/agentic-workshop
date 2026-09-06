@@ -75,7 +75,7 @@ export default function DocumentUpload({ onDocumentsReady }: DocumentUploadProps
         
         toast({
           title: "PDF uploaded",
-          description: `${file.name} will be analyzed by GPT-4o`,
+          description: `${file.name} will be analyzed by NVIDIA Nemotron`,
         });
       }
     } catch (error) {
@@ -182,7 +182,7 @@ export default function DocumentUpload({ onDocumentsReady }: DocumentUploadProps
             <div>
               <h3 className="text-lg font-semibold text-white">Job Description</h3>
               <p className="text-sm text-gray-400">
-                Paste the job posting you're applying for
+                Paste the job posting you&apos;re applying for
               </p>
             </div>
           </div>

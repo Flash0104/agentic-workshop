@@ -63,6 +63,15 @@ export const CreateSessionSchema = z.object({
 
 export type CreateSession = z.infer<typeof CreateSessionSchema>;
 
+// Generated question schema
+export const GeneratedQuestionSchema = z.object({
+  question: z.string().min(5),
+  focus: z.string().min(3),
+});
+
+export const GeneratedQuestionsListSchema = z.array(GeneratedQuestionSchema).min(1).max(10);
+export type GeneratedQuestion = z.infer<typeof GeneratedQuestionSchema>;
+
 // Evaluation result schema
 export const EvaluationScoresSchema = z.object({
   content: z.number().min(0).max(20),
@@ -74,14 +83,59 @@ export const EvaluationScoresSchema = z.object({
 
 export type EvaluationScores = z.infer<typeof EvaluationScoresSchema>;
 
+// STAR evidence component schema
+export const STARComponentSchema = z.object({
+  coverage: z.enum(["strong", "partial", "missing"]),
+  evidenceQuotes: z.array(z.string()),
+  missingInfo: z.string().optional(),
+});
+
+export const STARAnalysisSchema = z.object({
+  situation: STARComponentSchema,
+  task: STARComponentSchema,
+  action: STARComponentSchema,
+  result: STARComponentSchema,
+});
+
+export type STARAnalysis = z.infer<typeof STARAnalysisSchema>;
+
 export const EvaluationResultSchema = z.object({
   scores: EvaluationScoresSchema,
   total: z.number().min(0).max(100),
+  starAnalysis: STARAnalysisSchema.optional(),
   highlights: z.array(z.string()),
   improvements: z.array(z.string()),
+  disclaimer: z.string().default("Practice feedback only — not a hiring decision or prediction."),
+  metadata: z.object({
+    provider: z.string(),
+    model: z.string(),
+    promptVersion: z.string(),
+    evaluatedAt: z.string(),
+    transcriptHash: z.string().optional(),
+    usage: z.object({
+      promptTokens: z.number(),
+      completionTokens: z.number(),
+      totalTokens: z.number(),
+    }).optional(),
+  }).optional(),
 });
 
 export type EvaluationResult = z.infer<typeof EvaluationResultSchema>;
+
+// Retry Answer comparison schema
+export const CompareAnswersRequestSchema = z.object({
+  sessionId: z.string().uuid(),
+  questionText: z.string().min(1),
+  previousAnswer: z.string().min(1),
+  newAnswer: z.string().min(1),
+});
+
+export const CompareAnswersResponseSchema = z.object({
+  improvementsDetected: z.array(z.string()),
+  remainingGaps: z.array(z.string()),
+  scoreDelta: z.number(),
+  feedback: z.string(),
+});
 
 
 

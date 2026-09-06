@@ -34,6 +34,22 @@ export type Database = {
           created_at?: string;
           ended_at?: string | null;
         };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string | null;
+          language?: "en" | "de";
+          mode?: "easy" | "normal" | "hard";
+          scenario?: "interview" | "sales";
+          job_url?: string | null;
+          job_json?: Record<string, unknown> | null;
+          job_description?: string | null;
+          cv_text?: string | null;
+          generated_questions?: { question: string; focus: string }[] | null;
+          created_at?: string;
+          ended_at?: string | null;
+        };
+        Relationships: [];
       };
       turns: {
         Row: {
@@ -50,6 +66,13 @@ export type Database = {
           content: string;
           audio_url?: string | null;
         };
+        Update: {
+          session_id?: string;
+          role?: "user" | "ai" | "system";
+          content?: string;
+          audio_url?: string | null;
+        };
+        Relationships: [];
       };
       evaluations: {
         Row: {
@@ -72,6 +95,16 @@ export type Database = {
           improvements: string[];
           report_markdown: string;
         };
+        Update: {
+          session_id?: string;
+          rubric?: Record<string, unknown>;
+          scores?: Record<string, number>;
+          total_score?: number;
+          highlights?: string[];
+          improvements?: string[];
+          report_markdown?: string;
+        };
+        Relationships: [];
       };
       surveys: {
         Row: {
@@ -94,8 +127,22 @@ export type Database = {
           reuse: number;
           free_text?: string | null;
         };
+        Update: {
+          session_id?: string;
+          trust?: number;
+          usefulness?: number;
+          comfort?: number;
+          difficulty?: number;
+          reuse?: number;
+          free_text?: string | null;
+        };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 

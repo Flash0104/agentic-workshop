@@ -1,21 +1,25 @@
 import OpenAI from "openai";
+import {
+  callNemotronChat,
+  getNvidiaNemotronClient,
+  getOpenAIVoiceClient,
+} from "./llm-provider";
 
-// Use fallback empty string during build time to prevent errors
-// The actual value will be injected at runtime by Vercel
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+export { callNemotronChat, getNvidiaNemotronClient, getOpenAIVoiceClient };
+
+// Exported for backward compatibility; points to OpenAI voice client
+export const openai = getOpenAIVoiceClient().client;
 
 export const DEFAULT_MODEL =
-  (process.env.DEFAULT_MODEL as string) || "gpt-4o";
+  process.env.NVIDIA_MODEL || "nvidia/nemotron-3.5-lightning-30b-a3b";
 export const TTS_MODEL =
-  (process.env.TTS_MODEL as string) || "gpt-4o-audio-preview";
+  process.env.TTS_MODEL || "tts-1";
 export const MAX_TURN_TOKENS = parseInt(
   process.env.MAX_TURN_TOKENS || "1024",
   10
 );
 export const MAX_OUTPUT_TOKENS = parseInt(
-  process.env.MAX_OUTPUT_TOKENS || "512",
+  process.env.MAX_OUTPUT_TOKENS || "1024",
   10
 );
 export const MAX_TURNS_PER_SESSION = parseInt(
@@ -23,25 +27,29 @@ export const MAX_TURNS_PER_SESSION = parseInt(
   10
 );
 
+/**
+ * Generate completion using NVIDIA Nemotron
+ */
 export async function generateChatCompletion(
   messages: OpenAI.ChatCompletionMessageParam[],
-  temperature = 0.7
+  temperature = 0.3
 ): Promise<string> {
-  const completion = await openai.chat.completions.create({
-    model: DEFAULT_MODEL,
+  const result = await callNemotronChat({
     messages,
     temperature,
-    max_tokens: MAX_OUTPUT_TOKENS,
+    maxTokens: MAX_OUTPUT_TOKENS,
   });
-
-  return completion.choices[0]?.message?.content ?? "";
+  return result.content;
 }
 
+/**
+ * Speech-to-Text using OpenAI Whisper
+ */
 export async function transcribeAudio(
   audioBuffer: Buffer,
   mimeType: string
 ): Promise<string> {
-  // Map MIME type to file extension for OpenAI
+  const { client } = getOpenAIVoiceClient();
   const extensionMap: Record<string, string> = {
     "audio/webm": "webm",
     "audio/mp4": "mp4",
@@ -49,31 +57,33 @@ export async function transcribeAudio(
     "audio/wav": "wav",
     "audio/ogg": "ogg",
   };
-  
+
   const extension = extensionMap[mimeType] || "webm";
   const filename = `audio.${extension}`;
 
-  // Convert buffer to File-like object for OpenAI
-  // Create a new Uint8Array from the buffer to ensure proper type compatibility
   const uint8Array = new Uint8Array(audioBuffer);
   const blob = new Blob([uint8Array], { type: mimeType });
   const file = new File([blob], filename, { type: mimeType });
 
-  const transcription = await openai.audio.transcriptions.create({
+  const transcription = await client.audio.transcriptions.create({
     file,
     model: "whisper-1",
-    language: "en", // Could be dynamic based on session
+    language: "en",
   });
 
   return transcription.text;
 }
 
+/**
+ * Text-to-Speech using OpenAI TTS
+ */
 export async function generateSpeech(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova"
 ): Promise<Buffer> {
-  const mp3Response = await openai.audio.speech.create({
-    model: "tts-1",
+  const { client, ttsModel } = getOpenAIVoiceClient();
+  const mp3Response = await client.audio.speech.create({
+    model: ttsModel,
     voice,
     input: text,
   });
@@ -81,7 +91,3 @@ export async function generateSpeech(
   const arrayBuffer = await mp3Response.arrayBuffer();
   return Buffer.from(arrayBuffer);
 }
-
-
-
-

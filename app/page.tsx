@@ -161,7 +161,8 @@ export default function Home() {
       });
 
       if (!questionsResponse.ok) {
-        throw new Error("Failed to generate questions");
+        const errorData = await questionsResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate questions");
       }
 
       const { questions: generatedQuestions } =
@@ -202,6 +203,7 @@ export default function Home() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authSession.access_token}`,
         },
+        body: JSON.stringify({}),
       });
 
       // Redirect to session page for evaluation
@@ -226,6 +228,7 @@ export default function Home() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authSession.access_token}`,
           },
+          body: JSON.stringify({}),
         });
       }
     } catch (e) {
@@ -425,7 +428,7 @@ export default function Home() {
             </div>
             <h2 className="text-3xl font-bold text-white">Interview Complete!</h2>
             <p className="text-gray-400">
-              Great job! We're now preparing your detailed evaluation and feedback...
+              Great job! We&apos;re now preparing your detailed evaluation and feedback...
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
               <Loader2 className="w-4 h-4 animate-spin" />

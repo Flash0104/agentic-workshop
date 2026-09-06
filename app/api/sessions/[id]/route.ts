@@ -74,7 +74,13 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await req.json();
+    let body: any = {};
+    try {
+      const rawText = await req.text();
+      body = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      body = {};
+    }
     const session = await getSession(id, supabase);
 
     console.log("PATCH session check:", { 

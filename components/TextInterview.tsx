@@ -136,7 +136,7 @@ export default function TextInterview({
           {currentQuestionIndex > 0 && (
             <div className="pt-6 border-t border-gray-700">
               <p className="text-sm text-gray-400 mb-3">
-                You've answered {currentQuestionIndex} question{currentQuestionIndex > 1 ? 's' : ''}
+                You&apos;ve answered {currentQuestionIndex} question{currentQuestionIndex > 1 ? 's' : ''}
               </p>
               <div className="flex gap-2">
                 {answers.slice(0, currentQuestionIndex).map((_, idx) => (

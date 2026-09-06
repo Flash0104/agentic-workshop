@@ -252,7 +252,7 @@ export function useRealtime({ apiKey, instructions, onError }: UseRealtimeProps)
         // Convert to PCM16 little-endian
         const pcm = new Int16Array(input.length);
         for (let i = 0; i < input.length; i++) {
-          let s = Math.max(-1, Math.min(1, input[i]));
+          const s = Math.max(-1, Math.min(1, input[i]));
           pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
         clientRef.current?.sendAudio(pcm.buffer);

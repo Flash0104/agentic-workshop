@@ -10,9 +10,9 @@ type Survey = Database["public"]["Tables"]["surveys"]["Row"];
 export async function createSession(
   userId: string,
   data: CreateSession,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Session> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data: session, error } = await client
     .from("sessions")
     .insert({
@@ -36,9 +36,9 @@ export async function createSession(
 
 export async function getSession(
   sessionId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Session | null> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("sessions")
     .select("*")
@@ -46,14 +46,14 @@ export async function getSession(
     .single();
 
   if (error) return null;
-  return data;
+  return data as Session;
 }
 
 export async function getUserSessions(
   userId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Session[]> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("sessions")
     .select("*")
@@ -61,14 +61,14 @@ export async function getUserSessions(
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as Session[];
 }
 
 export async function endSession(
   sessionId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<void> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { error } = await client
     .from("sessions")
     .update({ ended_at: new Date().toISOString() })
@@ -82,9 +82,9 @@ export async function saveTurn(
   role: "user" | "ai" | "system",
   content: string,
   audioUrl?: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Turn> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("turns")
     .insert({
@@ -97,14 +97,14 @@ export async function saveTurn(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Turn;
 }
 
 export async function getSessionTurns(
   sessionId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Turn[]> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("turns")
     .select("*")
@@ -112,7 +112,7 @@ export async function getSessionTurns(
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as Turn[];
 }
 
 export async function saveEvaluation(
@@ -125,9 +125,9 @@ export async function saveEvaluation(
     improvements: string[];
     reportMarkdown: string;
   },
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Evaluation> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("evaluations")
     .insert({
@@ -143,14 +143,14 @@ export async function saveEvaluation(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Evaluation;
 }
 
 export async function getEvaluation(
   sessionId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Evaluation | null> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("evaluations")
     .select("*")
@@ -158,7 +158,7 @@ export async function getEvaluation(
     .single();
 
   if (error) return null;
-  return data;
+  return data as Evaluation;
 }
 
 export async function saveSurvey(
@@ -171,9 +171,9 @@ export async function saveSurvey(
     reuse: number;
     freeText?: string;
   },
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Survey> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("surveys")
     .insert({
@@ -189,14 +189,14 @@ export async function saveSurvey(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Survey;
 }
 
 export async function getSurvey(
   sessionId: string,
-  supabaseClient?: SupabaseClient<Database>
+  supabaseClient?: any
 ): Promise<Survey | null> {
-  const client = supabaseClient || supabase;
+  const client: any = supabaseClient || supabase;
   const { data, error } = await client
     .from("surveys")
     .select("*")
@@ -204,7 +204,7 @@ export async function getSurvey(
     .single();
 
   if (error) return null;
-  return data;
+  return data as Survey;
 }
 
 

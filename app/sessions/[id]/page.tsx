@@ -5,9 +5,9 @@ import { SurveyForm } from "@/components/SurveyForm";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Download, FileDown } from "lucide-react";
+import { ArrowLeft, Download, FileDown, Loader2, Sparkles } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface SessionData {
   session: {
@@ -55,12 +55,64 @@ export default function SessionDetailPage() {
   const [data, setData] = useState<SessionData | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
+  const evaluationTriggeredRef = useRef(false);
 
   const sessionId = params.id as string;
 
   useEffect(() => {
     loadSession();
   }, [sessionId]);
+
+  const handleEvaluate = async () => {
+    setIsEvaluating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Evaluation failed with status ${response.status}`);
+      }
+
+      // Reload session to display fresh evaluation
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (res.ok) {
+        const sessionData = await res.json();
+        setData(sessionData);
+        setShowSurvey(!sessionData.survey);
+      }
+
+      toast({
+        title: "Evaluation complete",
+        description: "Your session has been evaluated with NVIDIA Nemotron",
+      });
+    } catch (error) {
+      console.error("Error evaluating:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to evaluate session",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
 
   const loadSession = async () => {
     try {
@@ -81,6 +133,17 @@ export default function SessionDetailPage() {
       const sessionData = await response.json();
       setData(sessionData);
       setShowSurvey(!sessionData.survey);
+
+      // Auto-trigger STAR evaluation if candidate completed responses and evaluation hasn't run yet
+      if (
+        !sessionData.evaluation &&
+        sessionData.turns &&
+        sessionData.turns.length >= 2 &&
+        !evaluationTriggeredRef.current
+      ) {
+        evaluationTriggeredRef.current = true;
+        handleEvaluate();
+      }
     } catch (error) {
       console.error("Error loading session:", error);
       toast({
@@ -88,44 +151,6 @@ export default function SessionDetailPage() {
         description: error instanceof Error ? error.message : "Failed to load session",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleEvaluate = async () => {
-    setIsEvaluating(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await fetch("/api/evaluate", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ sessionId }),
-      });
-
-      if (!response.ok) throw new Error("Evaluation failed");
-
-      await loadSession();
-
-      toast({
-        title: "Evaluation complete",
-        description: "Your session has been evaluated",
-      });
-    } catch (error) {
-      console.error("Error evaluating:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to evaluate session",
-        variant: "destructive",
-      });
-    } finally {
-      setIsEvaluating(false);
     }
   };
 
@@ -243,7 +268,7 @@ ${data.turns.map((t) => `**${t.role.toUpperCase()}**: ${t.content}`).join("\n\n"
       scores.forEach(([category, score]) => {
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(60);
-        pdf.text(category, margin, yPos);
+        pdf.text(String(category), margin, yPos);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0);
         pdf.text(`${score}/20`, pageWidth - margin - 50, yPos);
@@ -352,8 +377,8 @@ ${data.turns.map((t) => `**${t.role.toUpperCase()}**: ${t.content}`).join("\n\n"
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{data.session.title}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-2xl font-bold text-white">{data.session.title}</h1>
+              <p className="text-sm text-slate-400">
                 {new Date(data.session.created_at).toLocaleString()}
               </p>
             </div>
@@ -376,14 +401,59 @@ ${data.turns.map((t) => `**${t.role.toUpperCase()}**: ${t.content}`).join("\n\n"
       <main className="flex-1 overflow-auto">
         <div className="max-w-5xl mx-auto p-6 space-y-8">
           {!data.evaluation ? (
-            <div className="text-center space-y-4 py-12">
-              <h2 className="text-xl font-semibold">Ready for Evaluation</h2>
-              <p className="text-muted-foreground">
-                Get AI-powered feedback on your performance
-              </p>
-              <Button onClick={handleEvaluate} disabled={isEvaluating}>
-                {isEvaluating ? "Evaluating..." : "Evaluate Session"}
-              </Button>
+            <div className="text-center space-y-5 py-16 max-w-lg mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+              {(!data.turns || data.turns.length === 0) ? (
+                <>
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                    <Sparkles className="w-8 h-8 text-amber-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
+                      No Responses Recorded
+                    </h2>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      No interview turns were recorded for this session. Please conduct an interview and answer the questions before generating an evaluation.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => router.push("/")}
+                    className="py-5 px-8 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20"
+                  >
+                    Start New Interview
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                    {isEvaluating ? (
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                    ) : (
+                      <Sparkles className="w-8 h-8 text-blue-400" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
+                      {isEvaluating
+                        ? "NVIDIA Nemotron Evaluating..."
+                        : "Ready for STAR Evaluation"}
+                    </h2>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      {isEvaluating
+                        ? "NVIDIA Nemotron is analyzing your complete 5-question interview transcript against STAR criteria (Situation, Task, Action, Result) to compute your scores and feedback..."
+                        : "All 5 questions have been answered. Generate your comprehensive behavioral report and performance radar."}
+                    </p>
+                  </div>
+                  {!isEvaluating && (
+                    <Button
+                      onClick={handleEvaluate}
+                      className="py-5 px-8 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Evaluate Complete Interview
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <>

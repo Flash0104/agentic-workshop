@@ -113,7 +113,7 @@ export default function LoginPage() {
 
             <div className="pt-4 border-t border-white/20 dark:border-white/10">
               <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link 
                   href="/register" 
                   className="font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"

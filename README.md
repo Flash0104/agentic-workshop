@@ -1,49 +1,48 @@
-# Agentic Workshop Trainer
+# Behavioral Interview Practice Coach (NVIDIA Nemotron + OpenAI Realtime)
 
-AI-powered conversational training platform for interview practice with **OpenAI Realtime API**, personalized question generation, and automated evaluation.
+An AI-powered behavioral interview coach developed for the NVIDIA open-model project submission.
 
-## ✨ New Features (v2.0)
+- **NVIDIA Nemotron** (`nvidia/nemotron-3.5-lightning-30b-a3b`): Powers personalized question generation, server-managed adaptive text interviewing with STAR probing, evidence-based evaluation, and answer comparison.
+- **OpenAI Realtime API** (WebRTC via `client_secrets` & `calls`): Powers ultra-low latency live spoken conversations with browser microphone streaming and turn detection.
 
-- **📄 Easy Input**: Drag & drop PDF/TXT files or paste your CV and job description directly
-- **🤖 AI Question Generation**: GPT-4o analyzes your profile and generates 5 targeted interview questions
-- **🎙️ Realtime Voice Interview**: Ultra-low latency voice interaction using OpenAI Realtime API (gpt-4o-realtime-preview)
-- **💬 Natural Conversations**: Sub-50ms latency, natural interruptions, and realistic interview flow
-- **📊 Intelligent Evaluation**: Automated scoring and feedback based on your actual responses
+> **Provider Attribution:** Live spoken dialogue is powered by OpenAI Realtime over WebRTC. Question planning, conversational interview state transitions, STAR evidence scoring, and feedback generation are powered by NVIDIA Nemotron.
 
-## Features
+## ✨ Core Capabilities
 
-- **Personalized Interview Training**: Upload CV + job description for custom questions
-- **OpenAI Realtime API**: Native voice-to-voice with ~50ms latency (10x faster than traditional STT+TTS)
-- **Document Parsing**: Support for PDF and TXT file formats
-- **AI Question Generation**: GPT-4o creates role-specific interview questions
-- **Smart Evaluation**: Comprehensive feedback on communication, technical skills, and fit
-- **Session History**: Complete transcript, scores, and improvement suggestions
-- **Modern UI**: Apple-inspired glassmorphism design
+- **📄 Profile & Job Context**: Ingests candidate CV and target job description with text/PDF parsing.
+- **🤖 NVIDIA Nemotron Question Generation**: Produces 5 grounded behavioral interview questions tailored to the candidate's background and target role.
+- **🔄 Adaptive Interview State Machine**: Server-managed state machine (`main_question` → `follow_up` → `next_question` → `completed`). Probes for missing Situation, Task, Action, or Result evidence with at most 2 follow-ups per main question.
+- **🎙️ Live Voice Interview (WebRTC)**: Browser WebRTC connected via server-generated ephemeral credentials. Zero permanent keys exposed to the client.
+- **📊 Evidence-Based STAR Evaluation**: Grounded analysis requiring verbatim transcript quotes. Scores are presented as practice feedback, not hiring predictions. No fabricated heuristics.
+- **🔁 Answer Retry & Comparison**: Compare initial answers with revised answers using the same rubric to track quantifiable improvement.
 
-## Tech Stack
+## Architecture
 
-**Frontend**: Next.js 15 (App Router), TypeScript, TailwindCSS, shadcn/ui
-
-**AI/Voice**: 
-- OpenAI Realtime API (gpt-4o-realtime-preview) - Native voice-to-voice
-- OpenAI GPT-4o - Question generation and evaluation
-- OpenAI Whisper - Transcript generation
-
-**Document Processing**: unpdf for lightweight PDF text extraction
-
-**Backend**: Next.js API routes, Zod validation, WebSocket (Realtime API)
-
-**Storage**: Supabase (Postgres + Auth + RLS + Realtime)
-
-**Deployment**: Vercel (frontend), Supabase (database)
+```
+[ Candidate Browser ]
+   │
+   ├─► [ POST /api/generate-questions ] ──► NVIDIA Nemotron (Personalized questions)
+   │
+   ├─► [ POST /api/chat ] (SSE Stream)  ──► NVIDIA Nemotron (Adaptive STAR state machine)
+   │
+   ├─► [ POST /api/realtime/session ]   ──► OpenAI Realtime (Ephemeral WebRTC credentials)
+   │         │
+   │         ▼ (Browser WebRTC PeerConnection)
+   │   [ OpenAI Realtime Audio Server ] (Natural spoken dialogue)
+   │
+   ├─► [ POST /api/evaluate ]           ──► NVIDIA Nemotron (STAR evidence evaluation)
+   │
+   └─► [ Supabase PostgreSQL ]          ──► Sessions, turns, evaluations (JWT RLS authenticated)
+```
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
-- Supabase account
-- OpenAI API key
+- Supabase account & project
+- NVIDIA API Key (`NVIDIA_API_KEY`) from [build.nvidia.com](https://build.nvidia.com)
+- OpenAI API Key (`OPENAI_API_KEY`) for Realtime voice capabilities
 
 ### Installation
 
@@ -248,30 +247,32 @@ Already deployed when you create the project. Just run the schema SQL.
 - Max 1024 input tokens / 512 output tokens per turn
 - Max 20 turns per session
 - Audio limited to 30 seconds per recording
-- TTS only for AI replies (no re-generation)
+## ⏱️ 60-Second Demo Outline
+
+1. **0:00 - 0:10 | Setup & Profile Ingestion:**
+   - Upload sample candidate resume (`Backend Engineer with 4 yrs experience`) and target job posting.
+   - Click "Generate Questions". NVIDIA Nemotron parses the context and returns 5 grounded behavioral questions.
+2. **0:10 - 0:25 | Adaptive Interview Probing:**
+   - Candidate answers Question 1 with incomplete Result evidence ("I fixed the caching bug").
+   - Nemotron's server state machine recognizes missing Result evidence and generates a targeted follow-up ("What was the measured impact on system latency?").
+   - Candidate provides numbers ("Query latency reduced by 40%"). Nemotron acknowledges and advances to Question 2.
+3. **0:25 - 0:40 | Live Spoken Voice (OpenAI Realtime WebRTC):**
+   - Click "Start Voice Interview".
+   - Candidate speaks into microphone. Browser WebRTC streams audio with sub-second turnaround and natural interruption handling.
+4. **0:40 - 0:50 | Evidence-Based STAR Evaluation:**
+   - Complete interview and click "Evaluate".
+   - NVIDIA Nemotron analyzes the transcript, quotes candidate statements verbatim, scores Situation/Task/Action/Result coverage, and presents actionable practice feedback.
+5. **0:50 - 1:00 | Answer Comparison & Retry:**
+   - Candidate retries their answer to Question 1. Nemotron highlights specific improvements and calculates score delta.
 
 ## Troubleshooting
 
-**"Unauthorized" error**: Configure Supabase authentication or use the demo user in development
+- **"Unauthorized" error**: Ensure you are logged in via Supabase Auth.
+- **"NVIDIA API authentication failed"**: Set a valid `NVIDIA_API_KEY` from build.nvidia.com in `.env.local`.
+- **"Evaluation temporarily unavailable"**: If the model experiences a rate limit or timeout, the transcript is preserved in Supabase and you can retry without losing progress. No fake heuristic scores are generated.
 
-**No audio transcription**: Check microphone permissions and OpenAI API key
+## License Notice
 
-**Evaluation fails**: Fallback heuristic scoring will be used automatically
+> [!WARNING]
+> An explicit `LICENSE` file was not present in the original repository checkout. For submission to open-model contests or open-source distribution, adding a standard open-source license (e.g. Apache 2.0 or MIT) to the root directory is strongly recommended.
 
-**RLS errors**: Verify you're logged in and row-level security policies are correct
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
-
-## License
-
-MIT
-
-## Support
-
-Open an issue for bugs or feature requests.

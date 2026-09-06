@@ -1,0 +1,44 @@
+{
+  "interviews": [
+    {
+      "id": "synthetic-senior-backend-01",
+      "targetRole": "Senior Backend Engineer",
+      "turns": [
+        {
+          "role": "ai",
+          "content": "Tell me about a time when a critical database bottleneck affected users and how you resolved it."
+        },
+        {
+          "role": "user",
+          "content": "At my previous company, during Black Friday sales (Situation), our Postgres database hit 100% CPU due to slow unindexed joins, blocking order checkout (Task). I led the emergency response: I identified the slow queries using pg_stat_statements, implemented Redis write-through caching for product catalogs, and added composite indexes on orders table (Action). As a result, database CPU dropped to 35% and we processed 120,000 transactions without further drops (Result)."
+        }
+      ],
+      "expectedSTAR": {
+        "situation": "strong",
+        "task": "strong",
+        "action": "strong",
+        "result": "strong"
+      }
+    },
+    {
+      "id": "synthetic-junior-frontend-02",
+      "targetRole": "Frontend Developer",
+      "turns": [
+        {
+          "role": "ai",
+          "content": "Can you share an experience where you had to adapt to a new framework quickly?"
+        },
+        {
+          "role": "user",
+          "content": "I had to learn Next.js because our team wanted to rebuild the portal. It was pretty difficult at first, but I watched tutorials and read docs. Eventually the website looked much nicer."
+        }
+      ],
+      "expectedSTAR": {
+        "situation": "partial",
+        "task": "partial",
+        "action": "partial",
+        "result": "missing"
+      }
+    }
+  ]
+}
